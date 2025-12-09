@@ -1,0 +1,11 @@
+{
+  "id": "flyshow",
+  "name": "Flyshow 发布",
+  "version": "0.1.0",
+  "author": "flyMD",
+  "description": "将 flyMD 笔记发布为可免费部署到 Vercel 的数字花园",
+  "main": "main.js",
+  "homepage": "https://github.com/flyhunterl/flymd",
+  "minHostVersion": "0.6.9",
+  "showInMenuBar": true
+}

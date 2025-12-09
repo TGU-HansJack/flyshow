@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{siteTitle}}</title>
+  <meta name="description" content="{{siteDescription}}" />
+  <link rel="stylesheet" href="{{assetBase}}/style.css">
+</head>
+<body data-theme="light">
+  <header class="site-header">
+    <div class="title">{{siteTitle}}</div>
+    <nav>{{nav}}</nav>
+    <div style="margin-left:auto;">
+      <button class="btn ghost" id="toggle-theme">Toggle theme</button>
+    </div>
+  </header>
+  <section class="hero">
+    <div>
+      <p class="eyebrow">Latest</p>
+      <h1>{{siteTitle}}</h1>
+      <p class="lead">{{siteDescription}}</p>
+    </div>
+  </section>
+  <section class="home-grid">
+    {{articles}}
+  </section>
+  <footer>
+    <div>{{footer}}</div>
+  </footer>
+  <script src="{{assetBase}}/theme.js"></script>
+</body>
+</html>
