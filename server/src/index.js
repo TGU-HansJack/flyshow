@@ -34,9 +34,9 @@ const DB_PREFIX = process.env.FLYSHOW_DB_PREFIX || 'flyshow_'
 const SINGLE_TOKENS = new Set()
 let INSTALLED = false
 const THEME_PRESETS = {
-  default: { name: '榛樿', css: '' },
+  default: { name: '默认', css: '' },
   glass: {
-    name: '鍗婇€忔槑',
+    name: '半透明',
     css: `
       body { background: radial-gradient(circle at 10% 20%, rgba(96,165,250,0.12), transparent 40%), radial-gradient(circle at 80% 0, rgba(16,185,129,0.12), transparent 32%), linear-gradient(180deg, rgba(255,255,255,0.82), rgba(248,250,252,0.86)); }
       [data-theme="dark"] body { background: radial-gradient(circle at 10% 20%, rgba(96,165,250,0.08), transparent 40%), radial-gradient(circle at 80% 0, rgba(16,185,129,0.08), transparent 32%), #0c0f17; }
@@ -143,7 +143,7 @@ function hashPassword(password, salt) {
 
 function requireInstalled(req, res, next) {
   if (INSTALLED) return next()
-  return res.status(503).json({ ok: false, message: '闇€瑕佸厛瀹屾垚瀹夎', needSetup: true })
+  return res.status(503).json({ ok: false, message: '需要先完成安装', needSetup: true })
 }
 
 async function upsertSettings({ mode, siteTitle, installed }) {
@@ -333,7 +333,7 @@ async function authenticate(req, requireAdmin = false) {
 }
 
 async function requireAuth(req, res, next) {
-  if (!INSTALLED) return res.status(503).json({ ok: false, message: '闇€瑕佸厛瀹夎', needSetup: true })
+  if (!INSTALLED) return res.status(503).json({ ok: false, message: '需要先安装', needSetup: true })
   const user = await authenticate(req, false)
   if (!user) return unauthorized(res)
   req.user = user
@@ -342,7 +342,7 @@ async function requireAuth(req, res, next) {
 }
 
 async function requireAdmin(req, res, next) {
-  if (!INSTALLED) return res.status(503).json({ ok: false, message: '闇€瑕佸厛瀹夎', needSetup: true })
+  if (!INSTALLED) return res.status(503).json({ ok: false, message: '需要先安装', needSetup: true })
   const user = await authenticate(req, true)
   if (!user) return unauthorized(res)
   req.user = user
@@ -666,7 +666,9 @@ function timeValue(value, fallback = 0) {
 function trimText(text, limit = 160) {
   const clean = String(text || '').replace(/\s+/g, ' ').trim()
   if (clean.length <= limit) return clean
-  return clean.slice(0, limit - 1) + '鈥?
+  return clean.slice(0, limit - 1) + '…'
+}
+
 }
 
 function renderPage({ title, body, config, meta, urlPath, basePath, toc, commentHtml }) {
@@ -802,7 +804,7 @@ function renderIndexPage(notes, config, basePath) {
       const slug = String(n.relativePath || '').replace(/\\/g, '/').replace(/\.(md|markdown|txt)$/i, '')
       const url = n.url || (basePath ? `${basePath}/${slug}` : '/' + slug)
       const titleHtml = n.encrypted
-        ? `<a class="placeholder-link" href="${url}" aria-label="鎵撳紑鍔犲瘑鏂囩珷">
+        ? `<a class="placeholder-link" href="${url}" aria-label="打开加密文章">
             <div class="placeholder-bars">
               <div class="placeholder-bar wide"></div>
               <div class="placeholder-bar"></div>
@@ -907,8 +909,8 @@ async function buildSite(notes, config, userCtx) {
         relativePath: note.relativePath,
         url,
         hash: note.hash,
-        title: '鍔犲瘑鍐呭',
-        summary: '璇ユ枃绔犲凡鍔犲瘑',
+        title: '加密内容',
+        summary: '该文章已加密',
         tags: [],
         author: meta.author || userCtx.username || '',
         category: meta.category || '',
@@ -916,8 +918,6 @@ async function buildSite(notes, config, userCtx) {
         publishedAt: meta.publishedAt,
         encrypted: true,
       })
-      continue
-    }
 
     const { content: linkReplaced } = preprocessLinks(note.content || '', slugMap, note.relativePath)
     const parsed = matter(linkReplaced || '')
@@ -1053,7 +1053,7 @@ async function readStoredNotes(rawDir) {
 }
 
 function renderPanelPage() {
-  return `<!doctype html><html><head><meta charset="utf-8"/><title>flyshow 鎺у埗鍙?/title><style>
+  return `<!doctype html><html><head><meta charset="utf-8"/><title>flyshow 控制台</title><style>
     :root { --border:#d0d7de; --fg:#1f2328; --muted:#57606a; --bg:#f6f8fa; --card:#ffffff; --blue:#0969da; }
     *{box-sizing:border-box;}
     body{font-family:'Segoe UI','Inter',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--fg);margin:0;padding:32px;display:flex;justify-content:center;}
@@ -1076,57 +1076,57 @@ function renderPanelPage() {
     .status{margin-top:8px;color:var(--blue);}
   </style></head><body>
   <div class="wrap">
-    <h1>flyshow 鎺у埗鍙?/h1>
+    <h1>flyshow 控制台</h1>
     <section>
-      <h3>鐧诲綍</h3>
+      <h3>登录</h3>
       <div class="row">
-        <div class="col"><label>鐢ㄦ埛鍚?/label><input id="login-user" placeholder="鐢ㄦ埛鍚?></div>
-        <div class="col"><label>瀵嗙爜</label><input id="login-pass" type="password" placeholder="瀵嗙爜"></div>
-        <div class="col"><label>璁惧鍚?/label><input id="login-device" placeholder="璁惧鍚? value="web-panel"></div>
+        <div class="col"><label>用户名</label><input id="login-user" placeholder="用户名"></div>
+        <div class="col"><label>密码</label><input id="login-pass" type="password" placeholder="密码"></div>
+        <div class="col"><label>设备名</label><input id="login-device" placeholder="设备名" value="web-panel"></div>
       </div>
       <div style="margin-top:12px;display:flex;gap:10px;align-items:center;">
-        <button class="primary" onclick="login()">鐧诲綍骞惰幏鍙?token</button>
+        <button class="primary" onclick="login()">登录并获取 token</button>
         <span id="login-result" class="status"></span>
       </div>
     </section>
     <section>
-      <h3>娉ㄥ唽</h3>
+      <h3>注册</h3>
       <div class="row">
-        <div class="col"><label>閭€璇风爜</label><input id="reg-code" placeholder="閭€璇风爜"></div>
-        <div class="col"><label>鐢ㄦ埛鍚?/label><input id="reg-user" placeholder="鐢ㄦ埛鍚?></div>
-        <div class="col"><label>瀵嗙爜</label><input id="reg-pass" type="password" placeholder="瀵嗙爜"></div>
+        <div class="col"><label>邀请码</label><input id="reg-code" placeholder="邀请码"></div>
+        <div class="col"><label>用户名</label><input id="reg-user" placeholder="用户名"></div>
+        <div class="col"><label>密码</label><input id="reg-pass" type="password" placeholder="密码"></div>
       </div>
       <div style="margin-top:12px;display:flex;gap:10px;align-items:center;">
-        <button onclick="registerUser()">娉ㄥ唽璐﹀彿</button>
+        <button onclick="registerUser()">注册账号</button>
         <span id="reg-result" class="status"></span>
       </div>
-      <div class="muted" style="margin-top:6px;">娉ㄥ唽闇€閭€璇风爜锛岄€傜敤浜庡鐢ㄦ埛妯″紡銆?/div>
+      <div class="muted" style="margin-top:6px;">注册需邀请码，适用于多用户模式。</div>
     </section>
     <section class="admin-only">
-      <h3>鍒涘缓閭€璇风爜</h3>
+      <h3>创建邀请码</h3>
       <div class="row">
-        <div class="col"><label>鑷畾涔夐個璇风爜锛堝彲鐣欑┖锛?/label><input id="invite-code" placeholder="鐣欑┖鑷姩鐢熸垚"></div>
-        <div class="col"><label>澶囨敞</label><input id="invite-note" placeholder="澶囨敞"></div>
+        <div class="col"><label>自定义邀请码（可留空）</label><input id="invite-code" placeholder="留空自动生成"></div>
+        <div class="col"><label>备注</label><input id="invite-note" placeholder="备注"></div>
       </div>
       <div style="margin-top:12px;display:flex;gap:10px;align-items:center;">
-        <button onclick="invite()">鍒涘缓</button>
+        <button onclick="invite()">创建</button>
         <span id="invite-result" class="status"></span>
       </div>
     </section>
     <section class="admin-only">
-      <h3>娉ㄩ攢璁惧 Token</h3>
+      <h3>注销设备 Token</h3>
       <div class="row">
-        <div class="col"><label>token</label><input id="revoke-token" placeholder="token 鍊?></div>
+        <div class="col"><label>token</label><input id="revoke-token" placeholder="token 值"></div>
       </div>
       <div style="margin-top:12px;display:flex;gap:10px;align-items:center;">
-        <button onclick="revoke()">娉ㄩ攢</button>
+        <button onclick="revoke()">注销</button>
         <span id="revoke-result" class="status"></span>
       </div>
     </section>
     <section class="admin-only">
-      <h3>鐢ㄦ埛鍒楄〃</h3>
-      <div style="margin-bottom:8px;"><button onclick="loadUsers()">鍒锋柊</button></div>
-      <div id="users" class="muted">绠＄悊鍛樼櫥褰曞悗鍙煡鐪嬨€?/div>
+      <h3>用户列表</h3>
+      <div style="margin-bottom:8px;"><button onclick="loadUsers()">刷新</button></div>
+      <div id="users" class="muted">管理员登录后可查看。</div>
     </section>
   </div>
   <script>
@@ -1138,7 +1138,7 @@ function renderPanelPage() {
       const adminBlocks = document.querySelectorAll('.admin-only');
       adminBlocks.forEach((el)=>{ el.style.display = role === 'admin' ? 'block' : 'none'; });
       const loginResult = document.getElementById('login-result');
-      if(loginResult && token){ loginResult.textContent = '宸茬櫥褰曪紝瑙掕壊锛? + role; }
+      if(loginResult && token){ loginResult.textContent = '已登录，角色：' + role; }
     }
     async function login(){
       const body = {
@@ -1151,9 +1151,9 @@ function renderPanelPage() {
       const target = document.getElementById('login-result');
       if(data.ok){
         token=data.token;
-        target.textContent='鐧诲綍鎴愬姛';
+        target.textContent='登录成功';
         await refreshRole();
-      } else { target.textContent=data.message||'鐧诲綍澶辫触'; }
+      } else { target.textContent=data.message||'登录失败'; }
     }
     async function refreshRole(){
       try{
@@ -1168,7 +1168,7 @@ function renderPanelPage() {
         note: document.getElementById('invite-note').value||''
       };
       const res=await fetch('/api/invite',{method:'POST',headers:Object.assign({'Content-Type':'application/json'},authHeaders()),body:JSON.stringify(body)});
-      const data=await res.json(); document.getElementById('invite-result').textContent=data.ok?('閭€璇风爜: '+data.code):data.message;
+      const data=await res.json(); document.getElementById('invite-result').textContent=data.ok?('邀请码: '+data.code):data.message;
     }
     async function registerUser(){
       const body={
@@ -1177,19 +1177,19 @@ function renderPanelPage() {
         password: document.getElementById('reg-pass').value
       };
       const res=await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-      const data=await res.json(); document.getElementById('reg-result').textContent=data.ok?'娉ㄥ唽鎴愬姛':data.message;
+      const data=await res.json(); document.getElementById('reg-result').textContent=data.ok?'注册成功':data.message;
     }
     async function revoke(){
       const tokenVal = document.getElementById('revoke-token').value;
       const res=await fetch('/api/devices/revoke',{method:'POST',headers:Object.assign({'Content-Type':'application/json'},authHeaders()),body:JSON.stringify({token: tokenVal})});
-      const data=await res.json(); document.getElementById('revoke-result').textContent=data.ok?'宸叉敞閿€':data.message;
+      const data=await res.json(); document.getElementById('revoke-result').textContent=data.ok?'已注销':data.message;
     }
     async function loadUsers(){
       const res=await fetch('/api/users',{headers:authHeaders()});
       const data=await res.json();
       const container = document.getElementById('users');
-      if(!data.ok){ container.textContent=data.message||'澶辫触';return; }
-      container.innerHTML='<table><thead><tr><th>鐢ㄦ埛</th><th>瑙掕壊</th><th>鍒涘缓鏃堕棿</th></tr></thead><tbody>'+data.users.map(u=>'<tr><td>'+u.username+'</td><td>'+u.role+'</td><td>'+new Date(u.createdAt||0).toLocaleString()+'</td></tr>').join('')+'</tbody></table>';
+      if(!data.ok){ container.textContent=data.message||'失败';return; }
+      container.innerHTML='<table><thead><tr><th>用户</th><th>角色</th><th>创建时间</th></tr></thead><tbody>'+data.users.map(u=>'<tr><td>'+u.username+'</td><td>'+u.role+'</td><td>'+new Date(u.createdAt||0).toLocaleString()+'</td></tr>').join('')+'</tbody></table>';
     }
     setRole('guest');
   </script>
@@ -1296,16 +1296,16 @@ app.get('/api/install/status', (_req, res) => {
 })
 
 app.post('/api/install', async (req, res) => {
-  if (INSTALLED) return badRequest(res, '宸插畨瑁咃紝鏃犻渶閲嶅瀹夎')
+  if (INSTALLED) return badRequest(res, '已安装，无需重复安装')
   try {
     const { mode, adminUser, adminPass, singleUser, singlePass, siteTitle } = req.body || {}
     const cleanMode = mode === 'multi' ? 'multi' : mode === 'single' ? 'single' : null
-    if (!cleanMode) return badRequest(res, '妯″紡蹇呴』鏄?single 鎴?multi')
+    if (!cleanMode) return badRequest(res, '模式必须是 single 或 multi')
     if (siteTitle) {
       DEFAULT_CONFIG_TEXT = `export default { siteTitle: '${siteTitle}', nav: [], footer: '' }\n`
     }
     if (cleanMode === 'multi') {
-      if (!adminUser || !adminPass) return badRequest(res, '绠＄悊鍛樿处鍙锋垨瀵嗙爜涓虹┖')
+      if (!adminUser || !adminPass) return badRequest(res, '管理员账号或密码为空')
       MULTI_MODE = true
       ADMIN_USER = String(adminUser).trim()
       ADMIN_PASS = String(adminPass)
@@ -1319,7 +1319,7 @@ app.post('/api/install', async (req, res) => {
       await ensureAdminUser()
       res.json({ ok: true, mode: 'multi' })
     } else {
-      if (!singleUser || !singlePass) return badRequest(res, '鍗曠敤鎴疯处鍙锋垨瀵嗙爜涓虹┖')
+      if (!singleUser || !singlePass) return badRequest(res, '单用户账号或密码为空')
       MULTI_MODE = false
       AUTH_USER = String(singleUser).trim()
       AUTH_PASS = String(singlePass)
@@ -1348,9 +1348,9 @@ app.get('/panel', (_req, res) => {
 })
 
 app.post('/api/login', async (req, res) => {
-  if (!INSTALLED) return res.status(503).json({ ok: false, message: '闇€瑕佸厛瀹夎', needSetup: true })
+  if (!INSTALLED) return res.status(503).json({ ok: false, message: '需要先安装', needSetup: true })
   const { username, password, device } = req.body || {}
-  if (!username || !password) return badRequest(res, '鐢ㄦ埛鍚嶆垨瀵嗙爜涓虹┖')
+  if (!username || !password) return badRequest(res, '用户名或密码为空')
   if (!MULTI_MODE) {
     const row = await getUser(username)
     if (!row) return unauthorized(res)
@@ -1370,15 +1370,15 @@ app.post('/api/login', async (req, res) => {
 })
 
 app.post('/api/register', async (req, res) => {
-  if (!MULTI_MODE) return badRequest(res, '鍗曠敤鎴锋ā寮忔棤闇€娉ㄥ唽')
+  if (!MULTI_MODE) return badRequest(res, '单用户模式无需注册')
   try {
     const { code, username, password } = req.body || {}
-    if (!code || !username || !password) return badRequest(res, '缂哄皯鍙傛暟')
+    if (!code || !username || !password) return badRequest(res, '缺少参数')
     const invite = await getInvite(code)
-    if (!invite || invite.used) return badRequest(res, '閭€璇风爜鏃犳晥鎴栧凡浣跨敤')
+    if (!invite || invite.used) return badRequest(res, '邀请码无效或已使用')
     const uname = sanitizeUsername(username)
     const exists = await getUser(uname)
-    if (exists) return badRequest(res, '鐢ㄦ埛鍚嶅凡瀛樺湪')
+    if (exists) return badRequest(res, '用户名已存在')
     const { salt, hash } = hashPassword(password)
     await createUser({ username: uname, salt, hash, role: 'user' })
     await markInviteUsed(code, uname)
@@ -1391,7 +1391,7 @@ app.post('/api/register', async (req, res) => {
 })
 
 app.post('/api/invite', requireAdmin, async (req, res) => {
-  if (!MULTI_MODE) return badRequest(res, '鍗曠敤鎴锋ā寮忔棤闇€閭€璇风爜')
+  if (!MULTI_MODE) return badRequest(res, '单用户模式无需邀请码')
   const { code, note } = req.body || {}
   const c = code && String(code).trim() ? code.trim() : randomId(6)
   await createInviteRow({ code: c, note, createdBy: req.user.username })
@@ -1399,15 +1399,15 @@ app.post('/api/invite', requireAdmin, async (req, res) => {
 })
 
 app.get('/api/users', requireAdmin, async (_req, res) => {
-  if (!MULTI_MODE) return badRequest(res, '鍗曠敤鎴锋ā寮忔棤闇€璇ユ帴鍙?)
+  if (!MULTI_MODE) return badRequest(res, '单用户模式无需此接口')
   const users = await listUsers()
   res.json({ ok: true, users: users.map((u) => ({ username: u.username, role: u.role || 'user', createdAt: u.created_at })) })
 })
 
 app.post('/api/devices/revoke', requireAdmin, async (req, res) => {
-  if (!MULTI_MODE) return badRequest(res, '鍗曠敤鎴锋ā寮忔棤闇€璇ユ帴鍙?)
+  if (!MULTI_MODE) return badRequest(res, '单用户模式无需此接口')
   const { token } = req.body || {}
-  if (!token) return badRequest(res, 'token 涓虹┖')
+  if (!token) return badRequest(res, 'token 为空')
   await revokeTokenRow(token)
   res.json({ ok: true })
 })
@@ -1439,7 +1439,7 @@ app.post('/api/delete', requireAuth, async (req, res) => {
         if (!targets.includes(clean)) targets.push(clean)
       } catch {}
     }
-    if (targets.length === 0) return badRequest(res, 'relativePaths 涓虹┖鎴栨棤鏁?)
+    if (targets.length === 0) return badRequest(res, 'relativePaths 为空或无数据')
     const paths = pathsForUser(req.user.username)
     await ensureUserDirs(req.user.username)
     const existing = await readStoredNotes(paths.rawDir)
@@ -1453,7 +1453,7 @@ app.post('/api/delete', requireAuth, async (req, res) => {
         keepNotes.push(note)
       }
     }
-    if (removedFound.length === 0) return badRequest(res, '鏈壘鍒拌鍒犻櫎鐨勬枃绔?)
+    if (removedFound.length === 0) return badRequest(res, '未找到要删除的笔记')
     for (const rel of removedFound) {
       const rawPath = path.join(paths.rawDir, rel)
       const encPath = rawPath.replace(/\.(md|markdown|txt)$/i, '.enc.json')
@@ -1480,10 +1480,10 @@ app.post('/api/publish', requireAuth, async (req, res) => {
   try {
     const { notes, configText, theme } = req.body || {}
     if (!Array.isArray(notes)) {
-      return badRequest(res, 'notes 闇€瑕佹暟缁?)
+      return badRequest(res, 'notes 需要数组')
     }
     const filteredNotes = notes.filter((n) => !isHiddenRel(n.relativePath))
-    if (filteredNotes.length === 0) return badRequest(res, '娌℃湁鍙彂甯冪殑绗旇')
+    if (filteredNotes.length === 0) return badRequest(res, '没有可发布的笔记')
     const paths = pathsForUser(req.user.username)
     await ensureUserDirs(req.user.username)
     await persistConfig(configText, paths.configPath)
@@ -1496,7 +1496,7 @@ app.post('/api/publish', requireAuth, async (req, res) => {
         n.meta = Object.assign({}, n.meta || {}, { date: new Date().toISOString() })
       }
     }
-    // 鍚堝苟宸叉湁绗旇锛岄伩鍏嶅彧鍙戝竷鍗曠瘒鏃惰鐩栨棫鍐呭
+    // 合并已有笔记，避免只发布单篇时覆盖旧内容
     const existing = await readStoredNotes(paths.rawDir)
     const mergedMap = new Map()
     for (const n of existing) mergedMap.set(normalizeRel(n.relativePath), n)
